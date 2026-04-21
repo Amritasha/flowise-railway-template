@@ -19,7 +19,7 @@ jobs:
       - name: Get latest Flowise release
         id: latest
         run: |
-          VERSION=$(curl -fsSL https://registry.hub.docker.com/v2/repositories/flowiseai/flowise/tags?page_size=20 \
+          VERSION=$(curl -fsSL "https://registry.hub.docker.com/v2/repositories/flowiseai/flowise/tags?page_size=20&ordering=-last_updated" \
             | python3 -c "
           import json, sys, re
           data = json.load(sys.stdin)
