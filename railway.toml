@@ -1,0 +1,23 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/v1/ping"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[[deploy.volumeMounts]]
+mountPath = "/root/.flowise"
+
+[variables]
+PORT = "3000"
+NODE_ENV = "production"
+DATABASE_PATH = "/root/.flowise"
+APIKEY_PATH = "/root/.flowise"
+SECRETKEY_PATH = "/root/.flowise"
+LOG_PATH = "/root/.flowise/logs"
+BLOB_STORAGE_PATH = "/root/.flowise/storage"
+DISABLE_FLOWISE_TELEMETRY = "true"
+FLOWISE_FILE_SIZE_LIMIT = "50mb"

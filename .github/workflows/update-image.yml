@@ -1,0 +1,57 @@
+name: Update Flowise image
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'   # every Monday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Check for new Flowise release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest Flowise release
+        id: latest
+        run: |
+          VERSION=$(curl -fsSL https://registry.hub.docker.com/v2/repositories/flowiseai/flowise/tags?page_size=20 \
+            | python3 -c "
+          import json, sys, re
+          data = json.load(sys.stdin)
+          tags = [t['name'] for t in data['results'] if re.match(r'^\d+\.\d+\.\d+$', t['name'])]
+          print(tags[0] if tags else '')
+          ")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Get current pinned version
+        id: current
+        run: |
+          VERSION=$(grep -oP '(?<=flowiseai/flowise:)\S+' Dockerfile | head -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update Dockerfile if newer version available
+        if: steps.latest.outputs.version != steps.current.outputs.version && steps.latest.outputs.version != ''
+        run: |
+          sed -i "s|FROM flowiseai/flowise:.*|FROM flowiseai/flowise:${{ steps.latest.outputs.version }}|" Dockerfile
+
+      - name: Open pull request
+        if: steps.latest.outputs.version != steps.current.outputs.version && steps.latest.outputs.version != ''
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update/flowise-${{ steps.latest.outputs.version }}
+          commit-message: "chore: update Flowise to ${{ steps.latest.outputs.version }}"
+          title: "chore: update Flowise to ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated update from the weekly image check.
+
+            - **Previous:** `${{ steps.current.outputs.version }}`
+            - **New:** `${{ steps.latest.outputs.version }}`
+
+            [Flowise changelog](https://github.com/FlowiseAI/Flowise/releases/tag/v${{ steps.latest.outputs.version }})
+          labels: dependencies
