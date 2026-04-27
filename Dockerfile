@@ -1,1 +1,1 @@
-FROM flowiseai/flowise:3.1.2
+FROM flowiseai/flowise:1.2.13
