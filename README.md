@@ -18,25 +18,37 @@ Click the **Deploy on Railway** button above.
 
 ## Environment variables
 
-Set these after deployment in the Railway service Variables tab:
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_PATH` | SQLite database. Points at the volume. |
+| `SECRETKEY_PATH` | Holds the key that encrypts every saved credential. Losing it makes them unreadable. |
+| `APIKEY_PATH`, `LOG_PATH`, `BLOB_STORAGE_PATH` | API keys, logs and uploaded files. All on the volume. |
+| `APP_URL` | Public URL, used in invitation and password-reset links. |
+| `NUMBER_OF_PROXIES` | `1`, so rate limiting sees real client IPs behind Railway's proxy. |
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `FLOWISE_USERNAME` | Recommended | Admin login username |
-| `FLOWISE_PASSWORD` | Recommended | Admin login password |
-| `PORT` | Auto | Set to `3000` (pre-configured) |
-
-All storage paths are pre-configured in `railway.toml` — no need to set them manually.
-
-See [`.env.example`](.env.example) for the full list including PostgreSQL, Redis, S3, and SMTP options.
+`FLOWISE_USERNAME` and `FLOWISE_PASSWORD` are **gone**. They did nothing from
+Flowise 3.0 onward — authentication moved to real accounts — and this template
+no longer sets them.
 
 ## First launch
 
-1. Open your Railway public domain
-2. Log in with your `FLOWISE_USERNAME` and `FLOWISE_PASSWORD`
-3. Start building flows from the canvas
+1. Open your Railway public domain.
+2. **Create the administrator account immediately.** Flowise 3.x has no default
+   login: the first person to reach the URL creates the admin account and owns
+   the instance. Do this before sharing the link.
+3. Start building from the canvas.
 
-> If you didn't set credentials, Flowise is open with no auth — set them before sharing the URL.
+## Data and persistence
+
+A volume is mounted at `/home/node/.flowise` and everything Flowise keeps lives
+there: the database, your chatflows, uploaded documents and the encryption key
+for saved credentials.
+
+This matters more than it sounds. Flowise runs as the unprivileged `node` user,
+so the data directory has to sit under that user's home — `/root/.flowise`,
+which earlier versions of this template used, is not writable by it. And a
+volume is not optional: without one, the encryption key is regenerated on every
+redeploy and every credential you have saved becomes undecryptable.
 
 ## Scaling up
 
