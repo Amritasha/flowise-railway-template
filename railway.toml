@@ -8,19 +8,10 @@ healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
-[[deploy.volumeMounts]]
-mountPath = "/root/.flowise"
-
-[variables]
-PORT = "3000"
-NODE_ENV = "production"
-DATABASE_PATH = "/root/.flowise"
-APIKEY_PATH = "/root/.flowise"
-SECRETKEY_PATH = "/root/.flowise"
-LOG_PATH = "/root/.flowise/logs"
-BLOB_STORAGE_PATH = "/root/.flowise/storage"
-DISABLE_FLOWISE_TELEMETRY = "true"
-FLOWISE_FILE_SIZE_LIMIT = "50mb"
-NUMBER_OF_PROXIES = "1"
-FLOWISE_USERNAME = ""
-FLOWISE_PASSWORD = ""
+# Note: volumes and variables are NOT declared here.
+#
+# Railway's config-as-code does not create volumes -- a [[deploy.volumeMounts]]
+# block here is silently ignored, which is how this template ended up with no
+# persistence at all while appearing to have some. The volume and the storage
+# paths live in the Railway template definition instead, where they actually
+# take effect.
