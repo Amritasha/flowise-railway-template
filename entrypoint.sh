@@ -8,23 +8,23 @@ DATA_DIR="${DATABASE_PATH:-/home/node/.flowise}"
 mkdir -p "$DATA_DIR" "$DATA_DIR/logs" "$DATA_DIR/storage"
 chown -R node:node "$DATA_DIR" 2>/dev/null || true
 
-# pnpm is installed globally with npm, so resolve it to an absolute path here:
-# su-exec execs directly without a shell, and inherits root's PATH rather than
-# the node user's, so a bare "pnpm" fails with "No such file or directory".
-PNPM="$(command -v pnpm || echo /usr/local/bin/pnpm)"
+# Locate pnpm. su-exec execs without a shell and inherits root's PATH, so a
+# bare "pnpm" can fail even though the image has it. Ask the node user's own
+# login shell first -- that is the environment the image was built for.
+PNPM="$(su-exec node sh -lc 'command -v pnpm' 2>/dev/null || true)"
+[ -n "$PNPM" ] || PNPM="$(command -v pnpm 2>/dev/null || true)"
+for c in /usr/local/bin/pnpm /usr/bin/pnpm /home/node/.local/share/pnpm/pnpm; do
+  [ -n "$PNPM" ] && break
+  [ -x "$c" ] && PNPM="$c"
+done
 
-if [ ! -x "$PNPM" ]; then
-  echo "FATAL: pnpm not found at $PNPM" >&2
+if [ -z "$PNPM" ]; then
+  echo "FATAL: could not locate pnpm. Searched the node user's PATH and:" >&2
+  ls -la /usr/local/bin 2>/dev/null | head -40 >&2
+  echo "--- node user PATH ---" >&2
+  su-exec node sh -lc 'echo $PATH' >&2 || true
   exit 1
 fi
 
-# su-exec is installed in the image, so this is the normal path. The fallback
-# exists only so a base-image change cannot leave the container unable to boot.
-if command -v su-exec >/dev/null 2>&1; then
-  exec su-exec node "$PNPM" start
-elif command -v gosu >/dev/null 2>&1; then
-  exec gosu node "$PNPM" start
-else
-  echo "No privilege-dropping tool found; starting as root." >&2
-  exec "$PNPM" start
-fi
+echo "[entrypoint] starting Flowise as node via $PNPM"
+exec su-exec node "$PNPM" start
