@@ -12,6 +12,10 @@ FROM flowiseai/flowise:3.1.4
 
 USER root
 
+# busybox's setpriv does not accept --init-groups, so install su-exec rather
+# than probing for whatever the base image happens to ship.
+RUN apk add --no-cache su-exec
+
 COPY entrypoint.sh /usr/local/bin/flowise-entrypoint.sh
 RUN chmod +x /usr/local/bin/flowise-entrypoint.sh
 
