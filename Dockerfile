@@ -8,7 +8,7 @@
 #   Error: EACCES: permission denied, mkdir '/home/node/.flowise/storage'
 # We therefore take ownership of the mount as root at boot, then drop straight
 # back to node before starting the app.
-FROM flowiseai/flowise:3.1.4
+FROM flowiseai/flowise:3.1.3
 
 USER root
 
